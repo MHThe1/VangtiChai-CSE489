@@ -15,8 +15,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.classwork.vangtichai.ui.theme.VangtiChaiTheme
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.platform.LocalConfiguration
 
 class MainActivity : ComponentActivity() {
@@ -43,138 +41,140 @@ fun VangtiChaiApp() {
     var amount by rememberSaveable { mutableStateOf("0") } // Ensure "0" is the default value
     val changeNotes: Map<Int, Int> = calculateChange(amount.toIntOrNull() ?: 0)
 
-    // Enable Scrolling
-    val scrollState = rememberScrollState()
-
     // Get screen orientation using LocalConfiguration
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
-    // Column with background color filling the whole screen and scrollability
-    Column(
+    // Main layout using BoxWithConstraints for responsive design
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // Set background color for the entire screen
-            .verticalScroll(scrollState), // Enable vertical scrolling
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        // Banner at the top with app title and background
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary) // Background color for the title
-                .padding(8.dp) // Padding inside the Box for spacing
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Vangtichai",
-                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 28.sp),
-                color = MaterialTheme.colorScheme.onPrimary, // Text color contrasting the background
-                modifier = Modifier.align(Alignment.TopStart)
-            )
-        }
-
-        // Display the current Taka amount
-        Text(
-            text = "Taka: $amount",
-            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp)) // Space between the Taka display and the rest
-
-        if (isLandscape) {
-            // Landscape mode: display change notes in two columns and keep keypad on the right
-            Row(
+            // Title Bar
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.Top
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(8.dp)
             ) {
-                // Left section with two columns for change notes taking 50% of the width
-                Row(
-                    modifier = Modifier.weight(0.5f),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Split changeNotes into two lists for two sub-columns
-                    val halfSize = (changeNotes.size + 1) / 2
-                    val leftColumnNotes = changeNotes.toList().take(halfSize)
-                    val rightColumnNotes = changeNotes.toList().drop(halfSize)
-
-                    // Left sub-column for the first half of the change notes
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        leftColumnNotes.forEach { (note: Int, count: Int) ->
-                            Text(text = "$note Taka: $count", style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-
-                    // Right sub-column for the second half of the change notes
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        rightColumnNotes.forEach { (note: Int, count: Int) ->
-                            Text(text = "$note Taka: $count", style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
-
-                // Right section for the keypad, taking the remaining 50% width
-                Keypad(
-                    modifier = Modifier.weight(0.5f),
-                    onDigitClick = { digit ->
-                        amount = when {
-                            digit == "Clear" -> "0" // Reset to "0" when cleared
-                            amount == "0" -> digit // Replace "0" with the first digit
-                            else -> (amount + digit).take(9) // Limit to 9 digits
-                        }
-                    }
+                Text(
+                    text = "Vangtichai",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp),
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             }
-        } else {
-            // Portrait mode: Original design with results on the left and keypad on the right
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically // Align components to the top
-            ) {
-                // Display with results on the left
-                Column(
-                    modifier = Modifier.weight(0.3f),
-                    verticalArrangement = Arrangement.spacedBy(32.dp),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    changeNotes.forEach { (note: Int, count: Int) ->
-                        Text(text = "$note Taka: $count", style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
 
-                // Numeric keypad on the right
-                Keypad(
-                    modifier = Modifier.weight(0.7f),
-                    onDigitClick = { digit ->
-                        amount = when {
-                            digit == "Clear" -> "0" // Reset to "0" when cleared
-                            amount == "0" -> digit // Replace "0" with the first digit
-                            else -> (amount + digit).take(9) // Limit to 9 digits
+            // Display the current Taka amount
+            Text(
+                text = "Taka: $amount",
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            if (isLandscape) {
+                // Landscape Mode: Two-column layout for change notes with the keypad on the right
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Change notes taking 50% of the width
+                    Row(
+                        modifier = Modifier.weight(0.5f),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Split changeNotes into two lists for two columns
+                        val halfSize = (changeNotes.size + 1) / 2
+                        val leftColumnNotes = changeNotes.toList().take(halfSize)
+                        val rightColumnNotes = changeNotes.toList().drop(halfSize)
+
+                        // Left sub-column for change notes
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            leftColumnNotes.forEach { (note, count) ->
+                                Text(
+                                    text = "$note Taka: $count",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+
+                        // Right sub-column for change notes
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            rightColumnNotes.forEach { (note, count) ->
+                                Text(
+                                    text = "$note Taka: $count",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
                         }
                     }
-                )
+
+                    // Keypad taking 50% of the width
+                    Keypad(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .fillMaxHeight(),
+                        onDigitClick = { digit ->
+                            amount = when {
+                                digit == "Clear" -> "0"
+                                amount == "0" -> digit
+                                else -> (amount + digit).take(9)
+                            }
+                        }
+                    )
+                }
+            } else {
+                // Portrait Mode: Original layout with the change notes on the left and keypad on the right
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Change notes taking 30% of the width
+                    Column(
+                        modifier = Modifier.weight(0.3f),
+                        verticalArrangement = Arrangement.spacedBy(30.dp)
+                    ) {
+                        changeNotes.forEach { (note, count) ->
+                            Text(
+                                text = "$note Taka: $count",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+
+                    // Keypad taking 70% of the width
+                    Keypad(
+                        modifier = Modifier.weight(0.7f),
+                        onDigitClick = { digit ->
+                            amount = when {
+                                digit == "Clear" -> "0"
+                                amount == "0" -> digit
+                                else -> (amount + digit).take(9)
+                            }
+                        }
+                    )
+                }
             }
         }
     }
 }
-
-
-
 
 @Composable
 fun Keypad(modifier: Modifier = Modifier, onDigitClick: (String) -> Unit) {
@@ -187,38 +187,30 @@ fun Keypad(modifier: Modifier = Modifier, onDigitClick: (String) -> Unit) {
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         for (row in keys) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                for ((index, key) in row.withIndex()) {
+                for (key in row) {
                     Button(
                         onClick = { onDigitClick(key) },
-                        modifier = if (row == keys.last() && key == "Clear") {
-                            Modifier
-                                .weight(2f) // Double the width for the "Clear" button
-                                .height(64.dp) // Fixed height for all buttons
-                                .padding(4.dp)
-                        } else {
-                            Modifier
-                                .weight(1f) // Normal width for other buttons
-                                .height(64.dp) // Fixed height for all buttons
-                                .padding(4.dp)
-                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(2.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary, // Background color
-                            contentColor = MaterialTheme.colorScheme.onPrimary // Text color
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
-                        shape = MaterialTheme.shapes.medium // Rounded corners
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Text(
                             text = key,
                             textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp) // Custom text style
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
                         )
                     }
                 }
