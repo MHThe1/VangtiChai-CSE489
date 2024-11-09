@@ -16,9 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.classwork.vangtichai.ui.theme.VangtiChaiTheme
 import androidx.compose.ui.platform.LocalConfiguration
-import android.view.SoundEffectConstants
-import android.view.View
-import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -141,7 +138,7 @@ fun VangtiChaiApp() {
                     )
                 }
             } else {
-                // Portrait Mode: Original layout with the change notes on the left and keypad on the right
+                // Portrait Mode
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -181,8 +178,6 @@ fun VangtiChaiApp() {
 
 @Composable
 fun Keypad(modifier: Modifier = Modifier, onDigitClick: (String) -> Unit) {
-    val context = LocalContext.current
-
     val keys = listOf(
         listOf("1", "2", "3"),
         listOf("4", "5", "6"),
@@ -195,18 +190,14 @@ fun Keypad(modifier: Modifier = Modifier, onDigitClick: (String) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        keys.forEach { row ->
+        for (row in keys) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                row.forEach { key ->
+                for (key in row) {
                     Button(
-                        onClick = {
-                            // Create a View and use it to play the sound effect
-                            View(context).playSoundEffect(SoundEffectConstants.CLICK)
-                            onDigitClick(key)
-                        },
+                        onClick = { onDigitClick(key) },
                         modifier = Modifier
                             .weight(1f)
                             .padding(2.dp),
@@ -227,6 +218,7 @@ fun Keypad(modifier: Modifier = Modifier, onDigitClick: (String) -> Unit) {
         }
     }
 }
+
 
 
 fun calculateChange(amount: Int): Map<Int, Int> {
