@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.classwork.vangtichai.ui.theme.VangtiChaiTheme
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.platform.LocalConfiguration
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,21 +35,26 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+
 @Composable
 fun VangtiChaiApp() {
     // Remember amount upon screen rotation
     var amount by rememberSaveable { mutableStateOf("0") } // Ensure "0" is the default value
-    val changeNotes = calculateChange(amount.toIntOrNull() ?: 0)
+    val changeNotes: Map<Int, Int> = calculateChange(amount.toIntOrNull() ?: 0)
 
     // Enable Scrolling
     val scrollState = rememberScrollState()
+
+    // Get screen orientation using LocalConfiguration
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     // Column with background color filling the whole screen and scrollability
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background) // Set background color for the entire screen
-            .padding(16.dp)
             .verticalScroll(scrollState), // Enable vertical scrolling
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -77,38 +83,96 @@ fun VangtiChaiApp() {
 
         Spacer(modifier = Modifier.height(16.dp)) // Space between the Taka display and the rest
 
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically // Align components to the top
-        ) {
-            // Display with results on the left
-            Column(
-                modifier = Modifier.weight(0.3f),
-                verticalArrangement = Arrangement.spacedBy(32.dp),
-                horizontalAlignment = Alignment.Start
+        if (isLandscape) {
+            // Landscape mode: display change notes in two columns and keep keypad on the right
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top
             ) {
-                // Display the result for Taka notes
-                changeNotes.forEach { (note, count) ->
-                    Text(text = "$note Taka: $count", style = MaterialTheme.typography.bodyLarge)
-                }
-            }
+                // Left section with two columns for change notes taking 50% of the width
+                Row(
+                    modifier = Modifier.weight(0.5f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Split changeNotes into two lists for two sub-columns
+                    val halfSize = (changeNotes.size + 1) / 2
+                    val leftColumnNotes = changeNotes.toList().take(halfSize)
+                    val rightColumnNotes = changeNotes.toList().drop(halfSize)
 
-            // Numeric keypad on the right
-            Keypad(
-                modifier = Modifier.weight(0.7f),
-                onDigitClick = { digit ->
-                    amount = when {
-                        digit == "Clear" -> "0" // Reset to "0" when cleared
-                        amount == "0" -> digit // Replace "0" with the first digit
-                        else -> (amount + digit).take(9) // Limit to 9 digits
+                    // Left sub-column for the first half of the change notes
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        leftColumnNotes.forEach { (note: Int, count: Int) ->
+                            Text(text = "$note Taka: $count", style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+
+                    // Right sub-column for the second half of the change notes
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        rightColumnNotes.forEach { (note: Int, count: Int) ->
+                            Text(text = "$note Taka: $count", style = MaterialTheme.typography.bodyLarge)
+                        }
                     }
                 }
-            )
+
+                // Right section for the keypad, taking the remaining 50% width
+                Keypad(
+                    modifier = Modifier.weight(0.5f),
+                    onDigitClick = { digit ->
+                        amount = when {
+                            digit == "Clear" -> "0" // Reset to "0" when cleared
+                            amount == "0" -> digit // Replace "0" with the first digit
+                            else -> (amount + digit).take(9) // Limit to 9 digits
+                        }
+                    }
+                )
+            }
+        } else {
+            // Portrait mode: Original design with results on the left and keypad on the right
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically // Align components to the top
+            ) {
+                // Display with results on the left
+                Column(
+                    modifier = Modifier.weight(0.3f),
+                    verticalArrangement = Arrangement.spacedBy(32.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    changeNotes.forEach { (note: Int, count: Int) ->
+                        Text(text = "$note Taka: $count", style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+
+                // Numeric keypad on the right
+                Keypad(
+                    modifier = Modifier.weight(0.7f),
+                    onDigitClick = { digit ->
+                        amount = when {
+                            digit == "Clear" -> "0" // Reset to "0" when cleared
+                            amount == "0" -> digit // Replace "0" with the first digit
+                            else -> (amount + digit).take(9) // Limit to 9 digits
+                        }
+                    }
+                )
+            }
         }
     }
 }
+
 
 
 
@@ -179,6 +243,7 @@ fun calculateChange(amount: Int): Map<Int, Int> {
 
     return change
 }
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
